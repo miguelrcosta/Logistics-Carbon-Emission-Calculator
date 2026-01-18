@@ -1,0 +1,56 @@
+image: gradle:8.8.0-jdk21-alpine
+
+stages:
+  - build
+  - test
+
+variables:
+  GIT_SSL_NO_VERIFY: "true"
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+
+before_script:
+  - echo "Start Automated Build"
+  - $env:GRADLE_USER_HOME="$pwd\.gradle"
+  - if (Test-Path "$pwd\.gradle\caches\8.8\fileContent\fileContent.lock") { Remove-Item "$pwd\.gradle\caches\8.8\fileContent\fileContent.lock" }
+  - ./gradlew --version
+
+cache:
+  paths:
+    - .gradle/wrapper
+    - .gradle/caches
+  key: "$CI_PROJECT_PATH-$CI_COMMIT_REF_NAME"
+
+build:
+  stage: build
+  script:
+    - ./gradlew -no-daemon assemble
+  tags:
+    - esii-gw-runner
+  artifacts:
+    paths:
+      - build/libs/*.jar
+
+test_black_box:
+  stage: test
+  tags:
+    - esii-gw-runner
+  script:
+    - ./gradlew -no-daemon test
+  artifacts:
+    paths:
+      - build/test-results/test/TEST-*.xml
+  needs: [build]
+
+test_white_box:
+  stage: test
+  tags:
+    - esii-gw-runner
+  script:
+    - ./gradlew -no-daemon jacocoTestReport
+  artifacts:
+    paths:
+      - build/reports/jacoco*
+  needs: [build]
+
+after_script:
+  - echo "End Automated Build"

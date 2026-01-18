@@ -1,0 +1,74 @@
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'pmd'
+    id 'de.aaschmid.cpd' version '3.5'
+}
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging { events "passed", "skipped", "failed", "standardOut", "standardError" }
+    finalizedBy jacocoTestReport // report is always generated after tests run
+}
+
+jacoco {
+    toolVersion = "0.8.11"
+    reportsDirectory = layout.buildDirectory.dir('./reports/jacoco')
+}
+
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
+    reports {
+        xml.required = false
+        csv.required =  false
+        html.outputLocation = layout.buildDirectory.dir('./reports/jacoco')
+    }
+}
+
+pmd {
+    consoleOutput = true
+    toolVersion = "7.4.0"
+    rulesMinimumPriority = 5
+    ruleSetFiles = files("src/main/resources/java/custom-pmd-rulesets.xml")
+    ruleSets = []
+
+    tasks.named('pmdMain') {
+        source = fileTree('src/main/java')
+    }
+
+    tasks.named('pmdTest') {
+        source = fileTree('src/test/java')
+    }
+}
+
+cpd {
+    language = 'java'
+    toolVersion = '7.4.0'
+    minimumTokenCount = 10
+}
+
+
+cpdCheck {
+    reports {
+        text.required = true
+        xml.required = false
+    }
+
+    source = sourceSets.main.allJava + sourceSets.test.allJava
+    ignoreFailures = false
+}
+
+

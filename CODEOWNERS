@@ -1,0 +1,3 @@
+# Code owners for Directory
+[Tests]
+test/java/* @8170538 @8220238 @8200066 @8220849 @8210382
